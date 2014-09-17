@@ -13,7 +13,7 @@ Install
 -------
 
 ```
-bower install tri-angular-scopromise
+bower install tri-angular-pagination
 ```
 
 ***
