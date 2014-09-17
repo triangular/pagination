@@ -7,7 +7,9 @@
   ],
   "ignore": [
     "demo/",
+    "src/",
     "Gruntfile.js",
+    "package.json",
     "CONTRIBUTING.md",
     ".gitignore",
     ".bowerrc"
