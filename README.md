@@ -59,7 +59,7 @@ and `paginatedModel` is:
     navWrap: 2, // how many navs should be visible before and after current page
     currentPage: 0, // 0 based currently chosen page
     navList: [], // navs
-    _hook: (Function), // passed hok function (only for async)
+    _hook: (Function), // passed hook function (only for async)
     _updateMode: 'updateAsync', // current mode ('updateAsync' or 'updateSync')
     
     update: function (pageNumber) { .. },
