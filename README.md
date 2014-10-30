@@ -6,6 +6,7 @@ Pagination
 Angular driven sync/async pagination model
 
 * [Triangular](http://triangular.io)
+* [Demo](http://jsfiddle.net/ulfryk/9m338rpm/)
 
 ***
 
