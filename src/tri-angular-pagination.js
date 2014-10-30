@@ -1,4 +1,4 @@
-(function (ng, triNgPagination) {
+(function (ng, triNgPagination, _baseConfig) {
     'use strict';
 
     // shortcuts
@@ -7,6 +7,7 @@
     var _isFunc = ng.isFunction;
     var _isNum = ng.isNumber;
     var _isObj = ng.isObject;
+    var _bind = ng.bind;
 
     // shortcuts to avoid cyclomatic complexity
     var _getObjOrElse = function (value, otherwise) {
@@ -17,20 +18,6 @@
     };
     var _getArrOrElse = function (value, otherwise) {
         return _isArr(value) ? value : otherwise;
-    };
-
-    // initial set of fields
-    var _baseConfig = {
-        fullList: null,
-        currentList: [],
-        pageLength:  null,
-        totalCount: null,
-        pageCount: null,
-        navWrap: 2,
-        currentPage: 0, // 0 based
-        navList: [],
-        _hook: ng.noop,
-        _updateMode: '_updateAsync'
     };
 
     //////////////////////////////
@@ -193,12 +180,13 @@
 
                 this.reloading = true;
 
-                promise['finally'](function () {
+                promise['finally'](_bind(this, function () {
+                    //noinspection JSPotentiallyInvalidUsageOfThis
                     this.reloading = false;
-                }.bind(this));
+                }));
 
                 return _ext(this, {
-                    reloadingPromise: promise.then(this._updatePreCounted.bind(this, pageNumber), $q.reject)
+                    reloadingPromise: promise.then(_bind(this, this._updatePreCounted, pageNumber), $q.reject)
                 });
             },
 
@@ -300,16 +288,24 @@
 
     triNgPagination
         .factory('triNgPaginationNavList', ['$log', TriNgPaginationNavListFactory])
-        .provider('triNgPagination', [
-            function () {
-                return {
-                    setConfig: function (cfg) {
-                        return _ext(_baseConfig, cfg);
-                    },
+        .provider('triNgPagination', function () {
+            return {
+                setConfig: function (cfg) {
+                    return _ext(_baseConfig, cfg);
+                },
+                $get: ['$q', '$log', 'triNgPaginationNavList', TriNgPaginationFactory]
+            };
+        });
 
-                    $get: ['$q', '$log', 'triNgPaginationNavList', TriNgPaginationFactory]
-                };
-            }
-        ]);
-
-}(angular, angular.module('triNgPagination', ['ng'])));
+}(angular, angular.module('triNgPagination', ['ng']), { // initial set of fields
+    fullList: null,
+    currentList: [],
+    pageLength:  null,
+    totalCount: null,
+    pageCount: null,
+    navWrap: 2,
+    currentPage: 0, // 0 based
+    navList: [],
+    _hook: null,
+    _updateMode: '_updateAsync'
+}));
