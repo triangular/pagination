@@ -268,8 +268,8 @@
             }
         });
 
-        return function (totalCount, pageLength) {
-            return new TriNgPagination(totalCount, pageLength);
+        return function (totalCount, pageLength, hookFn) {
+            return new TriNgPagination(totalCount, pageLength, hookFn);
         };
     };
 

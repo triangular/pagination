@@ -198,6 +198,7 @@
             updatePreCounted: function (pageNumber, cfg) {
                 var pageLength;
                 cfg = _getObjOrElse(cfg, {});
+                pageNumber = _getNumOrElse(pageNumber, this.currentPage);
                 pageLength = _getNumOrElse(cfg.pageLength, this.pageLength);
                 if (_isNum(cfg.totalCount) && cfg.totalCount !== this.totalCount) {
                     _ext(this, {
@@ -267,8 +268,8 @@
             }
         });
 
-        return function (totalCount, pageLength) {
-            return new TriNgPagination(totalCount, pageLength);
+        return function (totalCount, pageLength, hookFn) {
+            return new TriNgPagination(totalCount, pageLength, hookFn);
         };
     };
 

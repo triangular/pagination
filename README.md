@@ -85,6 +85,6 @@ var paginatedModel = triNgPagination(142, 20, function hookFn(newPageNumber, sin
     }).then(function (list) {
         return {currentList: list};
     }, $q.reject);
-});
+}).update(0);
 ```
 
