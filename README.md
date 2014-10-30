@@ -41,10 +41,9 @@ promise should be resolved with config:
 
 ```
 var cfg = {
-    totalCount: (Number), // optional
-    currentPage: (Number), // optional
-    currentList: (Array), // must be
-    pageLength: (Number) // not recommended, will change length of single page
+    totalCount: (Number),   // optional
+    currentPage: (Number),  // optional
+    currentList: (Array)    // must be
 }
 ```
 
@@ -52,19 +51,16 @@ and `paginatedModel` is:
 
 ```
 {
-    fullList: null, // only for sync
-    currentList: [], // current list to render
-    pageLength:  null, // length of single page
-    totalCount: null, // total items count
-    pageCount: null, // number of all pages
-    navWrap: 2, // how many navs should be visible before and after current page
-    currentPage: 0, // 0 based currently chosen page
-    navList: [], // navs
-    _hook: (Function), // passed hook function (only for async)
-    _updateMode: 'updateAsync', // current mode ('updateAsync' or 'updateSync')
+    fullList: null,         // only for sync
+    currentList: [],        // current list to render
+    pageLength:  null,      // length of single page
+    totalCount: null,       // total items count
+    pageCount: null,        // number of all pages
+    navWrap: 2,             // how many navs should be visible before and after current page
+    currentPage: 0,         // 0 based currently chosen page
+    navList: [],            // navs
     
-    update: function (pageNumber) { .. },
-    updateNavList: function () { .. },
+    update: function (pageNumber) { .. },   // pageNumber is optional (defaults to 0)
     hasNext: function () { .. },
     hasPrev: function () { .. },
     isFirst: function () { .. },
@@ -86,6 +82,6 @@ var paginatedModel = triNgPagination(142, 20, function hookFn(newPageNumber, sin
     }).then(function (list) {
         return {currentList: list};
     }, $q.reject);
-}).update(0);
+});
 ```
 
