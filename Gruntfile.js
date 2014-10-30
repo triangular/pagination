@@ -1,69 +1,63 @@
-module.exports = function(grunt) {
+/**
+ * Gruntfile [ copied from sails.js ]
+ *
+ * This Node script is executed when you run `grunt`.
+ * It's purpose is to load the Grunt tasks in your project's `tasks`
+ * folder, and allow you to add and remove tasks as you see fit.
+ *
+ * WARNING:
+ * Unless you know what you're doing, you shouldn't change this file.
+ * Check out the `tasks` directory instead.
+ */
 
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-copy');
+module.exports = function (grunt) {
 
-    grunt.initConfig({
-        pkg: grunt.file.readJSON('package.json'),
 
-        jshint: {
-            options: {
-                "camelcase": true,
-                "curly": true,
-                "expr": true,
-                "eqeqeq": false,
-                "freeze": true,
-                "globalstrict": true,
-                "globals": {
-                    "angular": false
-                },
-                "immed": true,
-                "indent": 4,
-                "latedef": true,
-                "maxdepth": 2,
-                "maxstatements": 12,
-                "maxcomplexity": 5,
-                "noarg": true,
-                "noempty": true,
-                "nonew": true,
-                "quotmark": true,
-                "strict": true,
-                "trailing": true,
-                "undef": true,
-                "unused": true,
-                "white": true
-            },
-            default: ['src/triangular-pagination.js']
-        },
+    /**
+     * Load the include-all library in order to require all of our grunt
+     * configurations and task registrations dynamically.
+     */
+    var includeAll = require('include-all');
 
-        uglify: {
-            options: {
-                report: 'gzip',
-                sourceMap: true
-            },
-            my_target: {
-                files: {
-                    'dist/triangular-pagination.min.js': ['src/triangular-pagination.js']
-                }
-            }
-        },
+    /**
+     * Loads Grunt configuration modules from the specified
+     * relative path. These modules should export a function
+     * that, when run, should either load/configure or register
+     * a Grunt task.
+     */
+    function loadTasks(relPath) {
+        return includeAll({
+            dirname: require('path').resolve(__dirname, relPath),
+            filter: /(.+)\.js$/
+        }) || {};
+    }
 
-        copy: {
-            main: {
-                files: [
-                    {src: ['src/triangular-pagination.js'], dest: 'demo/lib/triangular-pagination/triangular-pagination.js'},
-                    {src: ['src/triangular-pagination.js'], dest: 'dist/triangular-pagination.js'}
-                ]
+    /**
+     * Invokes the function from a Grunt configuration module with
+     * a single argument - the `grunt` object.
+     */
+    function invokeConfigFn(tasks) {
+        for (var taskName in tasks) {
+            if (tasks.hasOwnProperty(taskName)) {
+                tasks[taskName](grunt);
             }
         }
+    }
 
-    });
 
-    grunt.registerTask('default', [
-        'jshint',
-        'uglify',
-        'copy'
-    ]);
+    // Load task functions
+    var taskConfigurations = loadTasks('./tasks/config'),
+        registerDefinitions = loadTasks('./tasks/register');
+
+    // (ensure that a default task exists)
+    if (!registerDefinitions.default) {
+        registerDefinitions.default = function (grunt) {
+            grunt.registerTask('default', []);
+        };
+    }
+
+    // Run task functions to configure Grunt.
+    invokeConfigFn(taskConfigurations);
+    invokeConfigFn(registerDefinitions);
 
 };

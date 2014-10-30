@@ -7,6 +7,7 @@
   ],
   "ignore": [
     "demo/",
+    "tasks/",
     "src/",
     "Gruntfile.js",
     "package.json",
