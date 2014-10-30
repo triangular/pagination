@@ -117,8 +117,8 @@
 
 
     var TriNgPaginationFactory = function ($q, $log, evoPaginationNavList) {
-        var TriNgPagination = function TriNgPagination(totalCount, pageLength) {
-            return this.reset().init(totalCount, pageLength);
+        var TriNgPagination = function TriNgPagination(totalCount, pageLength, hookFn) {
+            return this.reset().init(totalCount, pageLength, hookFn);
         };
 
         _ext(TriNgPagination.prototype, {
@@ -135,7 +135,7 @@
                 });
             },
 
-            init: function (totalCount, pageLength) {
+            init: function (totalCount, pageLength, hookFn) {
                 // Where argument named 'totalCount' may be also an array holding 'fullList'
                 // of items to be paginated. In that case 'pagination' entity will work in
                 // 'syncUpdate' mode.
@@ -156,22 +156,22 @@
                     $log.error(new TypeError('pageLength should be a Number but got ' + (typeof pageLength)));
                 }
 
-                return _ext(this, {
+                _ext(this, {
                     fullList: fullList,
                     totalCount: totalCount,
                     pageLength: pageLength,
                     pageCount: this._getPageCount(totalCount, pageLength)
-                }).updateNavList();
+                }).setHook(hookFn, true).updateNavList();
             },
 
-            setHook: function (hookFn) {
+            setHook: function (hookFn, silent) {
                 // hookFn should expect args: offset, length
                 if (_isFunc(hookFn)) {
                     return _ext(this, {
                         _hook: hookFn
                     });
                 }
-                $log.error(new TypeError('Got ' + (typeof hookFn) + ' but expected Function.'));
+                silent || $log.error(new TypeError('Got ' + (typeof hookFn) + ' but expected Function.'));
                 return this;
             },
 
@@ -185,31 +185,30 @@
                 }.bind(this));
 
                 return _ext(this, {
-                    reloadingPromise: promise.then(this.updatePreCounted.bind(this), function (reason) {
-                        return $q.reject(reason);
-                    })
+                    reloadingPromise: promise.then(this.updatePreCounted.bind(this, pageNumber), $q.reject)
                 });
             },
 
             updateSync: function (pageNumber) {
-                return this.updatePreCounted({
-                    currentList: this.fullList.slice(pageNumber * this.pageLength, (pageNumber + 1) * this.pageLength),
-                    currentPage: pageNumber
+                return this.updatePreCounted(pageNumber, {
+                    currentList: this.fullList.slice(pageNumber * this.pageLength, (pageNumber + 1) * this.pageLength)
                 });
             },
 
-            updatePreCounted: function (cfg) {
+            updatePreCounted: function (pageNumber, cfg) {
+                var pageLength;
                 cfg = _getObjOrElse(cfg, {});
+                pageLength = _getNumOrElse(cfg.pageLength, this.pageLength);
                 if (_isNum(cfg.totalCount) && cfg.totalCount !== this.totalCount) {
                     _ext(this, {
                         totalCount: cfg.totalCount,
-                        pageCount: this._getPageCount(cfg.totalCount, this.pageLength)
+                        pageCount: this._getPageCount(pageLength)
                     });
                 }
                 return _ext(this, {
-                    currentPage: _getNumOrElse(cfg.currentPage, this.currentPage),
+                    currentPage: _getNumOrElse(cfg.currentPage, pageNumber),
                     currentList: _getArrOrElse(cfg.currentList, this.currentList),
-                    pageLength: _getNumOrElse(cfg.pageLength, this.pageLength)
+                    pageLength: pageLength
                 }).updateNavList();
             },
 
