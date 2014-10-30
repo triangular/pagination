@@ -1,16 +1,15 @@
-(function (ng, triNgPagination) {
+(function (ng, triNgPagination, _baseConfig) {
     'use strict';
 
     // shortcuts
-
     var _ext = ng.extend;
     var _isArr = ng.isArray;
     var _isFunc = ng.isFunction;
     var _isNum = ng.isNumber;
     var _isObj = ng.isObject;
+    var _bind = ng.bind;
 
     // shortcuts to avoid cyclomatic complexity
-
     var _getObjOrElse = function (value, otherwise) {
         return _isObj(value) ? value : otherwise;
     };
@@ -21,19 +20,9 @@
         return _isArr(value) ? value : otherwise;
     };
 
-    var _baseConfig = {
-        fullList: null,
-        currentList: [],
-        pageLength:  null,
-        totalCount: null,
-        pageCount: null,
-        navWrap: 2,
-        currentPage: 0, // 0 based
-        navList: [],
-        _hook: ng.noop,
-        _updateMode: 'updateAsync'
-    };
-
+    //////////////////////////////
+    // Nav elements view-model ///
+    //////////////////////////////
     var TriNgPaginationNavListFactory = function () {
         /* jshint -W071 */
         /* jshint -W074 */
@@ -116,26 +105,36 @@
     };
 
 
+    //////////////////////////////
+    // Paginated model wrapper ///
+    //////////////////////////////
     var TriNgPaginationFactory = function ($q, $log, evoPaginationNavList) {
+
+        // just cunstructor
         var TriNgPagination = function TriNgPagination(totalCount, pageLength, hookFn) {
-            return this.reset().init(totalCount, pageLength, hookFn);
+            return this._reset()._init(totalCount, pageLength)._setHook(hookFn, true).update();
         };
 
+        // all paginated share some functions, so:
         _ext(TriNgPagination.prototype, {
+
+            ///////////////////////////
+            // Private methods      ///
+            ///////////////////////////
 
             _getPageCount: function (totalCount, pageLength) {
                 var lastPageLength = totalCount % pageLength;
                 return (totalCount - lastPageLength) / pageLength + (lastPageLength > 0 ? 1 : 0);
             },
 
-            reset: function () {
+            _reset: function () {
                 return _ext(this, _baseConfig, {
                     reloading: false,
                     reloadingPromise: null
                 });
             },
 
-            init: function (totalCount, pageLength, hookFn) {
+            _init: function (totalCount, pageLength) {
                 // Where argument named 'totalCount' may be also an array holding 'fullList'
                 // of items to be paginated. In that case 'pagination' entity will work in
                 // 'syncUpdate' mode.
@@ -144,7 +143,7 @@
                 if (_isArr(totalCount)) {
                     fullList = totalCount;
                     totalCount = fullList.length;
-                    this._updateMode = 'updateSync';
+                    this._updateMode = '_updateSync';
                     this.currentList = fullList.slice(0, pageLength);
                 }
 
@@ -156,15 +155,15 @@
                     $log.error(new TypeError('pageLength should be a Number but got ' + (typeof pageLength)));
                 }
 
-                _ext(this, {
+                return _ext(this, {
                     fullList: fullList,
                     totalCount: totalCount,
                     pageLength: pageLength,
                     pageCount: this._getPageCount(totalCount, pageLength)
-                }).setHook(hookFn, true).updateNavList();
+                });
             },
 
-            setHook: function (hookFn, silent) {
+            _setHook: function (hookFn, silent) {
                 // hookFn should expect args: offset, length
                 if (_isFunc(hookFn)) {
                     return _ext(this, {
@@ -175,52 +174,58 @@
                 return this;
             },
 
-            updateAsync: function (pageNumber) {
+            _updateAsync: function (pageNumber) {
+                // using $q when to be sure that returned object is thenable
                 var promise = $q.when(this._hook(pageNumber, this.pageLength, this));
 
                 this.reloading = true;
 
-                promise['finally'](function () {
+                promise['finally'](_bind(this, function () {
+                    //noinspection JSPotentiallyInvalidUsageOfThis
                     this.reloading = false;
-                }.bind(this));
+                }));
 
                 return _ext(this, {
-                    reloadingPromise: promise.then(this.updatePreCounted.bind(this, pageNumber), $q.reject)
+                    reloadingPromise: promise.then(_bind(this, this._updatePreCounted, pageNumber), $q.reject)
                 });
             },
 
-            updateSync: function (pageNumber) {
-                return this.updatePreCounted(pageNumber, {
+            _updateSync: function (pageNumber) {
+                return this._updatePreCounted(pageNumber, {
                     currentList: this.fullList.slice(pageNumber * this.pageLength, (pageNumber + 1) * this.pageLength)
                 });
             },
 
-            updatePreCounted: function (pageNumber, cfg) {
+            _updatePreCounted: function (pageNumber, cfg) {
                 var pageLength;
                 cfg = _getObjOrElse(cfg, {});
-                pageNumber = _getNumOrElse(pageNumber, this.currentPage);
                 pageLength = _getNumOrElse(cfg.pageLength, this.pageLength);
                 if (_isNum(cfg.totalCount) && cfg.totalCount !== this.totalCount) {
                     _ext(this, {
                         totalCount: cfg.totalCount,
-                        pageCount: this._getPageCount(pageLength)
+                        pageCount: this._getPageCount(cfg.totalCount, pageLength)
                     });
                 }
                 return _ext(this, {
                     currentPage: _getNumOrElse(cfg.currentPage, pageNumber),
                     currentList: _getArrOrElse(cfg.currentList, this.currentList),
                     pageLength: pageLength
-                }).updateNavList();
+                })._updateNavList();
             },
 
-            update: function (pageNumber) {
-                return this[this._updateMode](pageNumber);
-            },
-
-            updateNavList: function () {
+            _updateNavList: function () {
                 return _ext(this, {
                     navList: evoPaginationNavList(this)
                 });
+            },
+
+            ///////////////////////////
+            // Public API           ///
+            ///////////////////////////
+
+            update: function (pageNumber) {
+                pageNumber = _getNumOrElse(pageNumber, this.currentPage);
+                return this[this._updateMode](pageNumber);
             },
 
             hasNext: function () {
@@ -268,23 +273,39 @@
             }
         });
 
+        ///////////////////////////
+        // Pagination factory   ///
+        ///////////////////////////
+
         return function (totalCount, pageLength, hookFn) {
             return new TriNgPagination(totalCount, pageLength, hookFn);
         };
     };
 
+    ///////////////////////////
+    // Make it angular      ///
+    ///////////////////////////
+
     triNgPagination
         .factory('triNgPaginationNavList', ['$log', TriNgPaginationNavListFactory])
-        .provider('triNgPagination', [
-            function () {
-                return {
-                    setConfig: function (cfg) {
-                        return _ext(_baseConfig, cfg);
-                    },
+        .provider('triNgPagination', function () {
+            return {
+                setConfig: function (cfg) {
+                    return _ext(_baseConfig, cfg);
+                },
+                $get: ['$q', '$log', 'triNgPaginationNavList', TriNgPaginationFactory]
+            };
+        });
 
-                    $get: ['$q', '$log', 'triNgPaginationNavList', TriNgPaginationFactory]
-                };
-            }
-        ]);
-
-}(angular, angular.module('triNgPagination', ['ng'])));
+}(angular, angular.module('triNgPagination', ['ng']), { // initial set of fields
+    fullList: null,
+    currentList: [],
+    pageLength:  null,
+    totalCount: null,
+    pageCount: null,
+    navWrap: 2,
+    currentPage: 0, // 0 based
+    navList: [],
+    _hook: null,
+    _updateMode: '_updateAsync'
+}));

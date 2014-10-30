@@ -1,12 +1,13 @@
 {
   "name": "tri-angular-pagination",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "main": [
     "dist/*.js",
     "dist/*.map"
   ],
   "ignore": [
     "demo/",
+    "tasks/",
     "src/",
     "Gruntfile.js",
     "package.json",
