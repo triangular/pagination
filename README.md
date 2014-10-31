@@ -60,15 +60,17 @@ and `paginatedModel` is:
     currentPage: 0,         // 0 based currently chosen page
     navList: [],            // navs
     
-    update: function (pageNumber) { .. },   // pageNumber is optional (defaults to 0)
-    hasNext: function () { .. },
-    hasPrev: function () { .. },
-    isFirst: function () { .. },
-    isLast: function () { .. },
+    nth: function (pageNumber) {}, // pageNumber is required
     next: function () { .. },
     prev: function () { .. },
     first: function () { .. },
-    last: function () { .. }
+    last: function () { .. },
+    
+    update: function (pageNumber) { .. },   // pageNumber defaults to 0
+    hasNext: function () { .. },
+    hasPrev: function () { .. },
+    isFirst: function () { .. },
+    isLast: function () { .. }
 }
 ````
 
