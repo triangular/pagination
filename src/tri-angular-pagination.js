@@ -244,16 +244,27 @@
                 return !this.hasNext();
             },
 
+            nth: function (num) {
+                var pageNumber = parseInt(num, 10);
+                if (isNaN(pageNumber)) {
+                    $log.error(new TypeError('nth(num) -> num should be a Number, but got ' + num + '  [ ' + (typeof num) + '].'));
+                    return this;
+                }
+                return pageNumber < 0 ? this.first() :
+                    pageNumber > this.pageCount - 1 ? this.last() :
+                        this.update(pageNumber);
+            },
+
             next: function () {
                 if (this.hasNext()) {
-                    return this[this._updateMode](this.currentPage + 1);
+                    return this.update(this.currentPage + 1);
                 }
                 return this;
             },
 
             prev: function () {
                 if (this.hasPrev()) {
-                    return this[this._updateMode](this.currentPage - 1);
+                    return this.update(this.currentPage - 1);
                 }
                 return this;
             },
@@ -262,14 +273,14 @@
                 if (this.isFirst()) {
                     return this;
                 }
-                return this[this._updateMode](0);
+                return this.update(0);
             },
 
             last: function () {
                 if (this.isLast()) {
                     return this;
                 }
-                return this[this._updateMode](this.pageCount - 1);
+                return this.update(this.pageCount - 1);
             }
         });
 
