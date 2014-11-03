@@ -109,8 +109,6 @@
     // Paginated model wrapper ///
     //////////////////////////////
     var TriNgPaginationFactory = function ($q, $log, evoPaginationNavList) {
-        var triNgPagination;
-
         // just cunstructor
         var TriNgPagination = function TriNgPagination(totalCount, pageLength, hookFn, extended) {
             return this._reset()._init(totalCount, pageLength)._setHook(hookFn, (extended || true)).update();
@@ -295,17 +293,14 @@
         // Pagination factory   ///
         ///////////////////////////
 
-        return function (extend, hook) {
-            if (_isObj(extend) && _isFunc(extend[hook])) {
+        return function (extendOrTotalCount, hookOrPageLength, hookFn) {
+            if (_isObj(extendOrTotalCount) && _isFunc(extendOrTotalCount[hookOrPageLength])) {
                 return function (totalCount, pageLength) {
-                    return new TriNgPagination(totalCount, pageLength, hook, extend);
-                }
+                    return new TriNgPagination(totalCount, pageLength, hookOrPageLength, extendOrTotalCount);
+                };
             }
-
-            return function (totalCount, pageLength, hookFn) {
-                return new TriNgPagination(totalCount, pageLength, hookFn);
-            }
-        }
+            return new TriNgPagination(extendOrTotalCount, hookOrPageLength, hookFn);
+        };
     };
 
     ///////////////////////////
