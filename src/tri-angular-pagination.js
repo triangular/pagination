@@ -109,10 +109,11 @@
     // Paginated model wrapper ///
     //////////////////////////////
     var TriNgPaginationFactory = function ($q, $log, evoPaginationNavList) {
+        var triNgPagination;
 
         // just cunstructor
-        var TriNgPagination = function TriNgPagination(totalCount, pageLength, hookFn) {
-            return this._reset()._init(totalCount, pageLength)._setHook(hookFn, true).update();
+        var TriNgPagination = function TriNgPagination(totalCount, pageLength, hookFn, extended) {
+            return this._reset()._init(totalCount, pageLength)._setHook(hookFn, (extended || true)).update();
         };
 
         // all paginated share some functions, so:
@@ -163,14 +164,20 @@
                 });
             },
 
-            _setHook: function (hookFn, silent) {
-                // hookFn should expect args: offset, length
+            _setHook: function (hookFn, extended) {
                 if (_isFunc(hookFn)) {
                     return _ext(this, {
                         _hook: hookFn
                     });
                 }
-                silent || $log.error(new TypeError('Got ' + (typeof hookFn) + ' but expected Function.'));
+                if (_isFunc(extended[hookFn])) {
+                    return _ext(this, extended, {
+                        _hook: extended[hookFn]
+                    });
+                }
+                if (extended !== true) {
+                    $log.error(new TypeError('Got ' + (typeof hookFn) + ' but expected Function.'));
+                }
                 return this;
             },
 
@@ -288,9 +295,17 @@
         // Pagination factory   ///
         ///////////////////////////
 
-        return function (totalCount, pageLength, hookFn) {
-            return new TriNgPagination(totalCount, pageLength, hookFn);
-        };
+        return function (extend, hook) {
+            if (_isObj(extend) && _isFunc(extend[hook])) {
+                return function (totalCount, pageLength) {
+                    return new TriNgPagination(totalCount, pageLength, hook, extend);
+                }
+            }
+
+            return function (totalCount, pageLength, hookFn) {
+                return new TriNgPagination(totalCount, pageLength, hookFn);
+            }
+        }
     };
 
     ///////////////////////////
